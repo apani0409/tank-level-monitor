@@ -1,0 +1,97 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/report/1.0.0/schema.json",
+  "themeCollection": {
+    "baseTheme": {
+      "name": "CY24SU10",
+      "version": "5.55",
+      "type": 2
+    }
+  },
+  "layoutOptimization": 0,
+  "resourcePackages": [
+    {
+      "resourcePackage": {
+        "disabled": false,
+        "items": [
+          {
+            "name": "CY24SU10",
+            "path": "BaseThemes/CY24SU10.json",
+            "type": 202
+          }
+        ],
+        "name": "SharedResources",
+        "type": 2
+      }
+    }
+  ],
+  "sections": [
+    {
+      "name": "ResumenOperativo",
+      "displayName": "Resumen operativo",
+      "filters": "[]",
+      "ordinal": 0,
+      "visualContainers": [
+        {
+          "x": 20,
+          "y": 20,
+          "width": 760,
+          "height": 260,
+          "z": 0,
+          "config": "{\"name\":\"estadoFlota\",\"layouts\":[{\"id\":0,\"position\":{\"x\":20,\"y\":20,\"z\":0,\"width\":760,\"height\":260}}],\"singleVisual\":{\"visualType\":\"tableEx\",\"projections\":{\"Values\":[{\"queryRef\":\"Tanques.Nombre\"},{\"queryRef\":\"Lecturas.Nivel actual %\"},{\"queryRef\":\"Lecturas.Estado del tanque\"},{\"queryRef\":\"Lecturas.Veredicto MNF\"},{\"queryRef\":\"Lecturas.Flujo nocturno mínimo (L/h)\"},{\"queryRef\":\"Lecturas.Cobertura del sensor %\"}]},\"prototypeQuery\":{\"Version\":2,\"From\":[{\"Name\":\"t\",\"Entity\":\"Tanques\",\"Type\":0},{\"Name\":\"l\",\"Entity\":\"Lecturas\",\"Type\":0}],\"Select\":[{\"Column\":{\"Expression\":{\"SourceRef\":{\"Source\":\"t\"}},\"Property\":\"Nombre\"},\"Name\":\"Tanques.Nombre\"},{\"Measure\":{\"Expression\":{\"SourceRef\":{\"Source\":\"l\"}},\"Property\":\"Nivel actual %\"},\"Name\":\"Lecturas.Nivel actual %\"},{\"Measure\":{\"Expression\":{\"SourceRef\":{\"Source\":\"l\"}},\"Property\":\"Estado del tanque\"},\"Name\":\"Lecturas.Estado del tanque\"},{\"Measure\":{\"Expression\":{\"SourceRef\":{\"Source\":\"l\"}},\"Property\":\"Veredicto MNF\"},\"Name\":\"Lecturas.Veredicto MNF\"},{\"Measure\":{\"Expression\":{\"SourceRef\":{\"Source\":\"l\"}},\"Property\":\"Flujo nocturno mínimo (L/h)\"},\"Name\":\"Lecturas.Flujo nocturno mínimo (L/h)\"},{\"Measure\":{\"Expression\":{\"SourceRef\":{\"Source\":\"l\"}},\"Property\":\"Cobertura del sensor %\"},\"Name\":\"Lecturas.Cobertura del sensor %\"}]},\"drillFilterOtherVisuals\":true,\"objects\":{\"title\":[{\"properties\":{\"text\":{\"expr\":{\"Literal\":{\"Value\":\"'Estado de la flota'\"}}},\"show\":{\"expr\":{\"Literal\":{\"Value\":\"true\"}}}}}]}}}",
+          "filters": "[]"
+        },
+        {
+          "x": 800,
+          "y": 20,
+          "width": 220,
+          "height": 120,
+          "z": 0,
+          "config": "{\"name\":\"consumoDiario\",\"layouts\":[{\"id\":0,\"position\":{\"x\":800,\"y\":20,\"z\":0,\"width\":220,\"height\":120}}],\"singleVisual\":{\"visualType\":\"card\",\"projections\":{\"Values\":[{\"queryRef\":\"Lecturas.Consumo diario promedio (m³)\"}]},\"prototypeQuery\":{\"Version\":2,\"From\":[{\"Name\":\"l\",\"Entity\":\"Lecturas\",\"Type\":0}],\"Select\":[{\"Measure\":{\"Expression\":{\"SourceRef\":{\"Source\":\"l\"}},\"Property\":\"Consumo diario promedio (m³)\"},\"Name\":\"Lecturas.Consumo diario promedio (m³)\"}]},\"drillFilterOtherVisuals\":true,\"objects\":{\"title\":[{\"properties\":{\"text\":{\"expr\":{\"Literal\":{\"Value\":\"'Consumo diario promedio (m³)'\"}}},\"show\":{\"expr\":{\"Literal\":{\"Value\":\"true\"}}}}}]}}}",
+          "filters": "[]"
+        },
+        {
+          "x": 800,
+          "y": 160,
+          "width": 220,
+          "height": 120,
+          "z": 0,
+          "config": "{\"name\":\"mnfCard\",\"layouts\":[{\"id\":0,\"position\":{\"x\":800,\"y\":160,\"z\":0,\"width\":220,\"height\":120}}],\"singleVisual\":{\"visualType\":\"card\",\"projections\":{\"Values\":[{\"queryRef\":\"Lecturas.Flujo nocturno mínimo (L/h)\"}]},\"prototypeQuery\":{\"Version\":2,\"From\":[{\"Name\":\"l\",\"Entity\":\"Lecturas\",\"Type\":0}],\"Select\":[{\"Measure\":{\"Expression\":{\"SourceRef\":{\"Source\":\"l\"}},\"Property\":\"Flujo nocturno mínimo (L/h)\"},\"Name\":\"Lecturas.Flujo nocturno mínimo (L/h)\"}]},\"drillFilterOtherVisuals\":true,\"objects\":{\"title\":[{\"properties\":{\"text\":{\"expr\":{\"Literal\":{\"Value\":\"'Flujo nocturno mínimo (L/h)'\"}}},\"show\":{\"expr\":{\"Literal\":{\"Value\":\"true\"}}}}}]}}}",
+          "filters": "[]"
+        },
+        {
+          "x": 20,
+          "y": 300,
+          "width": 500,
+          "height": 300,
+          "z": 0,
+          "config": "{\"name\":\"perfilHora\",\"layouts\":[{\"id\":0,\"position\":{\"x\":20,\"y\":300,\"z\":0,\"width\":500,\"height\":300}}],\"singleVisual\":{\"visualType\":\"columnChart\",\"projections\":{\"Category\":[{\"queryRef\":\"Lecturas.Hora\"}],\"Y\":[{\"queryRef\":\"Avg(Lecturas.ConsumoLitros)\"}]},\"prototypeQuery\":{\"Version\":2,\"From\":[{\"Name\":\"l\",\"Entity\":\"Lecturas\",\"Type\":0}],\"Select\":[{\"Column\":{\"Expression\":{\"SourceRef\":{\"Source\":\"l\"}},\"Property\":\"Hora\"},\"Name\":\"Lecturas.Hora\"},{\"Aggregation\":{\"Expression\":{\"Column\":{\"Expression\":{\"SourceRef\":{\"Source\":\"l\"}},\"Property\":\"ConsumoLitros\"}},\"Function\":1},\"Name\":\"Avg(Lecturas.ConsumoLitros)\"}]},\"drillFilterOtherVisuals\":true,\"objects\":{\"title\":[{\"properties\":{\"text\":{\"expr\":{\"Literal\":{\"Value\":\"'Consumo promedio por hora del día (L/h)'\"}}},\"show\":{\"expr\":{\"Literal\":{\"Value\":\"true\"}}}}}]}}}",
+          "filters": "[]"
+        },
+        {
+          "x": 540,
+          "y": 300,
+          "width": 480,
+          "height": 300,
+          "z": 0,
+          "config": "{\"name\":\"nivelHistorico\",\"layouts\":[{\"id\":0,\"position\":{\"x\":540,\"y\":300,\"z\":0,\"width\":480,\"height\":300}}],\"singleVisual\":{\"visualType\":\"lineChart\",\"projections\":{\"Category\":[{\"queryRef\":\"Lecturas.Fecha\"}],\"Y\":[{\"queryRef\":\"Avg(Lecturas.NivelPct)\"}]},\"prototypeQuery\":{\"Version\":2,\"From\":[{\"Name\":\"l\",\"Entity\":\"Lecturas\",\"Type\":0}],\"Select\":[{\"Column\":{\"Expression\":{\"SourceRef\":{\"Source\":\"l\"}},\"Property\":\"Fecha\"},\"Name\":\"Lecturas.Fecha\"},{\"Aggregation\":{\"Expression\":{\"Column\":{\"Expression\":{\"SourceRef\":{\"Source\":\"l\"}},\"Property\":\"NivelPct\"}},\"Function\":1},\"Name\":\"Avg(Lecturas.NivelPct)\"}]},\"drillFilterOtherVisuals\":true,\"objects\":{\"title\":[{\"properties\":{\"text\":{\"expr\":{\"Literal\":{\"Value\":\"'Nivel del tanque (%)'\"}}},\"show\":{\"expr\":{\"Literal\":{\"Value\":\"true\"}}}}}]}}}",
+          "filters": "[]"
+        },
+        {
+          "x": 800,
+          "y": 300,
+          "width": 220,
+          "height": 300,
+          "z": 0,
+          "config": "{\"name\":\"selectorTanque\",\"layouts\":[{\"id\":0,\"position\":{\"x\":800,\"y\":300,\"z\":0,\"width\":220,\"height\":300}}],\"singleVisual\":{\"visualType\":\"slicer\",\"projections\":{\"Values\":[{\"queryRef\":\"Tanques.Nombre\"}]},\"prototypeQuery\":{\"Version\":2,\"From\":[{\"Name\":\"t\",\"Entity\":\"Tanques\",\"Type\":0}],\"Select\":[{\"Column\":{\"Expression\":{\"SourceRef\":{\"Source\":\"t\"}},\"Property\":\"Nombre\"},\"Name\":\"Tanques.Nombre\"}]},\"drillFilterOtherVisuals\":true,\"objects\":{\"title\":[{\"properties\":{\"text\":{\"expr\":{\"Literal\":{\"Value\":\"'Tanque'\"}}},\"show\":{\"expr\":{\"Literal\":{\"Value\":\"true\"}}}}}]}}}",
+          "filters": "[]"
+        }
+      ],
+      "config": "{}",
+      "displayOption": 1,
+      "width": 1280,
+      "height": 720
+    }
+  ],
+  "config": "{\"version\":\"5.55\",\"themeCollection\":{\"baseTheme\":{\"name\":\"CY24SU10\",\"version\":\"5.55\",\"type\":2}},\"activeSectionIndex\":0,\"defaultDrillFilterOtherVisuals\":true,\"settings\":{\"useStylableVisualContainerHeader\":true}}",
+  "filters": "[]"
+}

@@ -1,0 +1,5 @@
+TankId,Nombre,Ubicacion,CapacidadLitros
+tank-01,"Tanque Norte","Acueducto Norte, Guanacaste",50000
+tank-02,"Tanque Industrial A","Zona Franca, Heredia",120000
+tank-03,"Tanque Comunal Sur","Nandayure, Guanacaste",30000
+tank-04,"Tanque Reserva","Planta Central, San José",80000

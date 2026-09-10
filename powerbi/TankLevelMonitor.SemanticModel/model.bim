@@ -1,0 +1,329 @@
+{
+  "name": "TankLevelMonitor",
+  "compatibilityLevel": 1567,
+  "model": {
+    "culture": "es-CR",
+    "dataAccessOptions": {
+      "legacyRedirects": true,
+      "returnErrorValuesAsNull": true
+    },
+    "defaultPowerBIDataSourceVersion": "powerBI_V3",
+    "sourceQueryCulture": "es-CR",
+    "tables": [
+      {
+        "name": "Tanques",
+        "columns": [
+          { "name": "TankId", "dataType": "string", "sourceColumn": "TankId", "summarizeBy": "none" },
+          { "name": "Nombre", "dataType": "string", "sourceColumn": "Nombre", "summarizeBy": "none" },
+          { "name": "Ubicacion", "dataType": "string", "sourceColumn": "Ubicacion", "summarizeBy": "none" },
+          {
+            "name": "CapacidadLitros",
+            "dataType": "int64",
+            "sourceColumn": "CapacidadLitros",
+            "summarizeBy": "sum",
+            "formatString": "#,0"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "Tanques",
+            "mode": "import",
+            "source": {
+              "type": "m",
+              "expression": [
+                "let",
+                "    Origen = Csv.Document(Web.Contents(\"https://raw.githubusercontent.com/apani0409/tank-level-monitor/master/powerbi/data/tanks.csv\"), [Delimiter = \",\", Columns = 4, Encoding = 65001, QuoteStyle = QuoteStyle.Csv]),",
+                "    Encabezados = Table.PromoteHeaders(Origen, [PromoteAllScalars = true]),",
+                "    Tipos = Table.TransformColumnTypes(Encabezados, {{\"TankId\", type text}, {\"Nombre\", type text}, {\"Ubicacion\", type text}, {\"CapacidadLitros\", Int64.Type}})",
+                "in",
+                "    Tipos"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "name": "Lecturas",
+        "columns": [
+          { "name": "TankId", "dataType": "string", "sourceColumn": "TankId", "summarizeBy": "none" },
+          {
+            "name": "Timestamp",
+            "dataType": "dateTime",
+            "sourceColumn": "Timestamp",
+            "summarizeBy": "none",
+            "formatString": "yyyy-mm-dd hh:nn"
+          },
+          {
+            "name": "NivelPct",
+            "dataType": "double",
+            "sourceColumn": "NivelPct",
+            "summarizeBy": "none",
+            "formatString": "0.0"
+          },
+          {
+            "name": "Fecha",
+            "dataType": "dateTime",
+            "type": "calculated",
+            "expression": "DATE ( YEAR ( Lecturas[Timestamp] ), MONTH ( Lecturas[Timestamp] ), DAY ( Lecturas[Timestamp] ) )",
+            "formatString": "yyyy-mm-dd",
+            "summarizeBy": "none",
+            "dataCategory": "Uncategorized"
+          },
+          {
+            "name": "Hora",
+            "dataType": "int64",
+            "type": "calculated",
+            "expression": "HOUR ( Lecturas[Timestamp] )",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "NivelAnterior",
+            "dataType": "double",
+            "type": "calculated",
+            "description": "Nivel de la lectura de la hora previa del mismo tanque. Queda en blanco cuando hubo un corte de comunicación, para no atribuir a una hora un consumo que nunca se midió.",
+            "expression": [
+              "VAR TanqueActual = Lecturas[TankId]",
+              "VAR HoraPrevia = Lecturas[Timestamp] - ( 1 / 24 )",
+              "RETURN",
+              "    CALCULATE (",
+              "        MAX ( Lecturas[NivelPct] ),",
+              "        ALLEXCEPT ( Lecturas, Lecturas[TankId] ),",
+              "        Lecturas[TankId] = TanqueActual,",
+              "        Lecturas[Timestamp] = HoraPrevia",
+              "    )"
+            ],
+            "formatString": "0.0",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "CaidaPct",
+            "dataType": "double",
+            "type": "calculated",
+            "description": "Caída de nivel respecto a la hora anterior. Las recargas (nivel que sube) no son consumo y quedan en blanco.",
+            "expression": [
+              "VAR Delta = Lecturas[NivelAnterior] - Lecturas[NivelPct]",
+              "RETURN",
+              "    IF ( NOT ISBLANK ( Lecturas[NivelAnterior] ) && Delta > 0, Delta )"
+            ],
+            "formatString": "0.00",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "ConsumoLitros",
+            "dataType": "double",
+            "type": "calculated",
+            "expression": "IF ( NOT ISBLANK ( Lecturas[CaidaPct] ), Lecturas[CaidaPct] / 100 * RELATED ( Tanques[CapacidadLitros] ) )",
+            "formatString": "#,0",
+            "summarizeBy": "sum"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "Lecturas",
+            "mode": "import",
+            "source": {
+              "type": "m",
+              "expression": [
+                "let",
+                "    Origen = Csv.Document(Web.Contents(\"https://raw.githubusercontent.com/apani0409/tank-level-monitor/master/powerbi/data/readings.csv\"), [Delimiter = \",\", Columns = 3, Encoding = 65001, QuoteStyle = QuoteStyle.Csv]),",
+                "    Encabezados = Table.PromoteHeaders(Origen, [PromoteAllScalars = true]),",
+                "    Tipos = Table.TransformColumnTypes(Encabezados, {{\"TankId\", type text}, {\"Timestamp\", type datetime}, {\"NivelPct\", type number}}),",
+                "    SinInvalidas = Table.SelectRows(Tipos, each [NivelPct] >= 0 and [NivelPct] <= 100)",
+                "in",
+                "    SinInvalidas"
+              ]
+            }
+          }
+        ],
+        "measures": [
+          {
+            "name": "Lecturas válidas",
+            "expression": "COUNTROWS ( Lecturas )",
+            "formatString": "#,0"
+          },
+          {
+            "name": "Nivel actual %",
+            "description": "Nivel de la lectura más reciente del tanque en contexto.",
+            "expression": [
+              "VAR UltimaLectura = MAX ( Lecturas[Timestamp] )",
+              "RETURN",
+              "    CALCULATE ( MAX ( Lecturas[NivelPct] ), Lecturas[Timestamp] = UltimaLectura )"
+            ],
+            "formatString": "0.0\"%\""
+          },
+          {
+            "name": "Volumen actual (L)",
+            "expression": "DIVIDE ( [Nivel actual %], 100 ) * SUM ( Tanques[CapacidadLitros] )",
+            "formatString": "#,0"
+          },
+          {
+            "name": "Consumo total (L)",
+            "expression": "SUM ( Lecturas[ConsumoLitros] )",
+            "formatString": "#,0"
+          },
+          {
+            "name": "Consumo total (m³)",
+            "expression": "DIVIDE ( [Consumo total (L)], 1000 )",
+            "formatString": "#,0.0"
+          },
+          {
+            "name": "Consumo promedio (L/h)",
+            "description": "Promedio sobre las horas que registraron consumo; las recargas y las horas sin dato no cuentan.",
+            "expression": "AVERAGEX ( FILTER ( Lecturas, NOT ISBLANK ( Lecturas[ConsumoLitros] ) ), Lecturas[ConsumoLitros] )",
+            "formatString": "#,0"
+          },
+          {
+            "name": "Consumo diario promedio (m³)",
+            "expression": "DIVIDE ( [Consumo total (m³)], DISTINCTCOUNT ( Lecturas[Fecha] ) )",
+            "formatString": "#,0.0"
+          },
+          {
+            "name": "Hora pico",
+            "description": "Hora del día con mayor consumo promedio.",
+            "expression": [
+              "VAR PorHora =",
+              "    ADDCOLUMNS (",
+              "        VALUES ( Lecturas[Hora] ),",
+              "        \"@Consumo\", CALCULATE ( AVERAGE ( Lecturas[ConsumoLitros] ) )",
+              "    )",
+              "RETURN",
+              "    MAXX ( TOPN ( 1, PorHora, [@Consumo], DESC ), Lecturas[Hora] )"
+            ],
+            "formatString": "0"
+          },
+          {
+            "name": "Flujo nocturno mínimo (L/h)",
+            "description": "Caída neta de nivel entre las 02:00 y las 04:00, promediada sobre las últimas 7 noches. Se mide como diferencia entre los extremos de la ventana y no sumando caídas hora a hora: de noche el consumo real es menor que el ruido del sensor, y sumar solo las bajadas inflaría la cifra.",
+            "expression": [
+              "VAR Capacidad = SUM ( Tanques[CapacidadLitros] )",
+              "VAR UltimaFecha = CALCULATE ( MAX ( Lecturas[Fecha] ), ALLSELECTED ( Lecturas ) )",
+              "VAR NochesRecientes =",
+              "    FILTER ( VALUES ( Lecturas[Fecha] ), Lecturas[Fecha] > UltimaFecha - 7 )",
+              "VAR CaidaPorNoche =",
+              "    ADDCOLUMNS (",
+              "        NochesRecientes,",
+              "        \"@Caida\",",
+              "            VAR Dia = Lecturas[Fecha]",
+              "            VAR NivelInicio =",
+              "                CALCULATE ( MAX ( Lecturas[NivelPct] ), Lecturas[Fecha] = Dia, Lecturas[Hora] = 2 )",
+              "            VAR NivelFin =",
+              "                CALCULATE ( MAX ( Lecturas[NivelPct] ), Lecturas[Fecha] = Dia, Lecturas[Hora] = 4 )",
+              "            RETURN",
+              "                IF (",
+              "                    NOT ISBLANK ( NivelInicio ) && NOT ISBLANK ( NivelFin ) && NivelInicio >= NivelFin,",
+              "                    ( NivelInicio - NivelFin ) / 100 * Capacidad / 2",
+              "                )",
+              "    )",
+              "RETURN",
+              "    AVERAGEX ( FILTER ( CaidaPorNoche, NOT ISBLANK ( [@Caida] ) ), [@Caida] )"
+            ],
+            "formatString": "#,0"
+          },
+          {
+            "name": "MNF % del promedio",
+            "expression": "DIVIDE ( [Flujo nocturno mínimo (L/h)], [Consumo promedio (L/h)] ) * 100",
+            "formatString": "0.0\"%\""
+          },
+          {
+            "name": "Veredicto MNF",
+            "description": "Entre las 02:00 y las 04:00 casi no debería haber demanda legítima, así que un flujo sostenido a esa hora suele ser pérdida.",
+            "expression": [
+              "VAR Pct = [MNF % del promedio]",
+              "RETURN",
+              "    SWITCH ( TRUE (), ISBLANK ( Pct ), \"Sin datos\", Pct >= 45, \"Alto\", Pct >= 25, \"Elevado\", \"Normal\" )"
+            ]
+          },
+          {
+            "name": "Tasa consumo 24h (%/h)",
+            "description": "Caída promedio por hora en las últimas 24 horas de lecturas.",
+            "expression": [
+              "VAR UltimaLectura = CALCULATE ( MAX ( Lecturas[Timestamp] ), ALLSELECTED ( Lecturas ) )",
+              "VAR Ventana =",
+              "    FILTER ( Lecturas, Lecturas[Timestamp] > UltimaLectura - 1 && NOT ISBLANK ( Lecturas[CaidaPct] ) )",
+              "RETURN",
+              "    AVERAGEX ( Ventana, Lecturas[CaidaPct] )"
+            ],
+            "formatString": "0.00"
+          },
+          {
+            "name": "Línea base (%/h)",
+            "description": "Mediana histórica de caída por hora, excluyendo las últimas 24 horas: si la ventana reciente entrara en la línea base, una fuga lenta se convertiría en su propia normalidad y la alerta nunca se dispararía.",
+            "expression": [
+              "VAR UltimaLectura = CALCULATE ( MAX ( Lecturas[Timestamp] ), ALLSELECTED ( Lecturas ) )",
+              "VAR Historico =",
+              "    FILTER ( Lecturas, Lecturas[Timestamp] <= UltimaLectura - 1 && NOT ISBLANK ( Lecturas[CaidaPct] ) )",
+              "RETURN",
+              "    MEDIANX ( Historico, Lecturas[CaidaPct] )"
+            ],
+            "formatString": "0.00"
+          },
+          {
+            "name": "Razón sobre línea base",
+            "expression": "DIVIDE ( [Tasa consumo 24h (%/h)], [Línea base (%/h)] )",
+            "formatString": "0.00\"×\""
+          },
+          {
+            "name": "Fuga súbita detectada",
+            "description": "Regla de tasa: consumo reciente sostenido por encima de 1.8× la línea base propia del tanque. Detecta fugas súbitas; las pérdidas lentas se ven en el flujo nocturno mínimo.",
+            "expression": [
+              "VAR Razon = [Razón sobre línea base]",
+              "RETURN",
+              "    IF ( NOT ISBLANK ( Razon ) && Razon > 1.8, \"Sí\", \"No\" )"
+            ]
+          },
+          {
+            "name": "Estado del tanque",
+            "expression": [
+              "SWITCH (",
+              "    TRUE (),",
+              "    [Fuga súbita detectada] = \"Sí\", \"Posible fuga\",",
+              "    [Veredicto MNF] IN { \"Alto\", \"Elevado\" }, \"Flujo nocturno alto\",",
+              "    [Nivel actual %] <= 25, \"Nivel bajo\",",
+              "    \"Normal\"",
+              ")"
+            ]
+          },
+          {
+            "name": "Cobertura del sensor %",
+            "description": "Lecturas recibidas contra las esperadas una por hora. Baja cuando hubo cortes de comunicación o lecturas descartadas por estar fuera de rango.",
+            "expression": [
+              "VAR Primera = MIN ( Lecturas[Timestamp] )",
+              "VAR Ultima = CALCULATE ( MAX ( Lecturas[Timestamp] ), ALLSELECTED ( Lecturas ) )",
+              "VAR Esperadas = ( Ultima - Primera ) * 24 + 1",
+              "RETURN",
+              "    DIVIDE ( COUNTROWS ( Lecturas ), Esperadas ) * 100"
+            ],
+            "formatString": "0.0\"%\""
+          },
+          {
+            "name": "Horas sin reportar",
+            "description": "Antigüedad de la última lectura del tanque respecto a la lectura más reciente de toda la flota.",
+            "expression": [
+              "VAR UltimaFlota = CALCULATE ( MAX ( Lecturas[Timestamp] ), ALL ( Lecturas ) )",
+              "VAR UltimaTanque = MAX ( Lecturas[Timestamp] )",
+              "RETURN",
+              "    ROUND ( ( UltimaFlota - UltimaTanque ) * 24, 0 )"
+            ],
+            "formatString": "0"
+          }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "name": "Lecturas_Tanques",
+        "fromTable": "Lecturas",
+        "fromColumn": "TankId",
+        "toTable": "Tanques",
+        "toColumn": "TankId",
+        "crossFilteringBehavior": "bothDirections"
+      }
+    ],
+    "annotations": [
+      {
+        "name": "__PBI_TimeIntelligenceEnabled",
+        "value": "0"
+      }
+    ]
+  }
+}
