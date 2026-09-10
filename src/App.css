@@ -197,3 +197,221 @@ footer {
 footer a {
   color: var(--accent);
 }
+
+/* --- Tabs --------------------------------------------------------------- */
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--border);
+  margin: 16px 0;
+}
+
+.tab {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.92rem;
+  color: var(--muted);
+}
+
+.tab:hover {
+  color: var(--text);
+}
+
+.tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+  font-weight: 600;
+}
+
+/* --- Sensor health ------------------------------------------------------ */
+
+.sensor-panel {
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+}
+
+.sensor-panel.sensor-degraded {
+  border-color: var(--low);
+  background: #fff8f0;
+}
+
+.sensor-panel.sensor-offline {
+  border-color: var(--leak);
+  background: #fdf2f3;
+}
+
+.sensor-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.sensor-meta {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.sensor-notes {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  font-size: 0.84rem;
+  color: var(--muted);
+}
+
+/* --- Tank card flags ---------------------------------------------------- */
+
+.tank-flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.flag {
+  font-size: 0.68rem;
+  padding: 2px 7px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  background: var(--bg);
+}
+
+.flag-sensor-degraded {
+  border-color: var(--low);
+  color: #8a4b00;
+}
+
+.flag-sensor-offline {
+  border-color: var(--leak);
+  color: #8a1520;
+}
+
+.flag-mnf {
+  border-color: #6f42c1;
+  color: #4b2a86;
+}
+
+/* --- Consumption panel -------------------------------------------------- */
+
+.consumption h3 {
+  margin: 4px 0 12px;
+}
+
+.consumption h4 {
+  margin: 20px 0 6px;
+  font-size: 0.95rem;
+  color: var(--text);
+}
+
+.chart-pair {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 20px;
+}
+
+.chart-caption {
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin: 2px 0 0;
+}
+
+.mnf-note {
+  font-size: 0.84rem;
+  color: var(--muted);
+  background: var(--bg);
+  border-left: 3px solid #6f42c1;
+  padding: 10px 12px;
+  border-radius: 0 6px 6px 0;
+  margin: 12px 0 4px;
+}
+
+.stat-sub {
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.stat.mnf-elevated {
+  border-left: 3px solid var(--low);
+}
+
+.stat.mnf-high {
+  border-left: 3px solid var(--leak);
+}
+
+.badge-mnf-normal {
+  background: var(--ok);
+  margin-left: 6px;
+}
+
+.badge-mnf-elevated {
+  background: var(--low);
+  margin-left: 6px;
+}
+
+.badge-mnf-high {
+  background: var(--leak);
+  margin-left: 6px;
+}
+
+/* --- Event log ---------------------------------------------------------- */
+
+.event-log table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.84rem;
+}
+
+.event-log th,
+.event-log td {
+  text-align: left;
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+
+.event-log th {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.nowrap {
+  white-space: nowrap;
+}
+
+.badge-ev-info {
+  background: var(--ok);
+}
+
+.badge-ev-warning {
+  background: var(--low);
+}
+
+.badge-ev-critical {
+  background: var(--leak);
+}
+
+.link-btn {
+  background: none;
+  border: none;
+  color: var(--accent);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.84rem;
+  padding: 8px 0;
+}
+
+.empty {
+  color: var(--muted);
+  font-size: 0.88rem;
+}

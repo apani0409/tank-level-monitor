@@ -81,9 +81,13 @@ function simulateTank(opts: {
 }
 
 const daytimeConsumption = (hour: number) => {
-  // higher draw 6am-9pm (household/industrial use), near-zero overnight
+  // Higher draw 6am-9pm (household/industrial use). Overnight demand is set
+  // deliberately close to zero, which is how a healthy distribution network
+  // actually behaves — that is the entire premise of minimum-night-flow
+  // analysis, and an unrealistically busy night would make the metric
+  // flag healthy tanks.
   if (hour >= 6 && hour <= 21) return 0.55;
-  return 0.12;
+  return 0.04;
 };
 
 const tanks: Tank[] = [
@@ -112,10 +116,12 @@ const tanks: Tank[] = [
       hourlyConsumption: (h) => daytimeConsumption(h) * 1.6,
       refillThresholdPct: 20,
       refillToPct: 90,
-      // Leak injected 18h before the end of the simulation: recent enough
-      // that it shows up in the "last 24h" window without having had time
-      // to contaminate the tank's own long-run baseline drop rate.
-      leakStartHour: 30 * 24 - 18,
+      // Leak injected 40h before the end of the simulation. Recent enough
+      // that it has not contaminated the tank's long-run baseline, but long
+      // enough to span a couple of overnight windows — otherwise the leak
+      // would be invisible to minimum-night-flow analysis purely by accident
+      // of when it started.
+      leakStartHour: 30 * 24 - 40,
       leakRatePctPerHour: 1.1,
       seed: 2,
     }),
@@ -131,6 +137,13 @@ const tanks: Tank[] = [
       hourlyConsumption: (h) => daytimeConsumption(h) * 0.8,
       refillThresholdPct: 30,
       refillToPct: 98,
+      // Slow seepage starting 12 days out. Deliberately too gradual for the
+      // 24h rate rule to ever fire — it barely moves the daily average — but
+      // it roughly triples overnight flow, which is exactly the loss that
+      // minimum-night-flow analysis exists to catch. The two detectors cover
+      // different failure regimes: bursts vs. persistent seepage.
+      leakStartHour: 30 * 24 - 12 * 24,
+      leakRatePctPerHour: 0.1,
       seed: 3,
     }),
   },
@@ -149,6 +162,52 @@ const tanks: Tank[] = [
     }),
   },
 ];
+
+// ---------------------------------------------------------------------------
+// Sensor faults
+//
+// Real field sensors fail in specific, recognizable ways. Each fault below is
+// injected into a different tank so the sensor-health layer has genuine
+// material to detect, and so the leak tank (tank-02) stays sensor-clean —
+// otherwise a data-quality problem and a real leak would be confounded.
+// ---------------------------------------------------------------------------
+
+/** Frozen sensor: keeps reporting, but the same value over and over. */
+function injectStuckRun(readings: Reading[], startHour: number, hours: number): Reading[] {
+  const frozenValue = readings[startHour].levelPct;
+  return readings.map((r, i) =>
+    i >= startHour && i < startHour + hours ? { ...r, levelPct: frozenValue } : r
+  );
+}
+
+/** Comms dropout: readings simply never arrive for a stretch, then resume. */
+function injectGap(readings: Reading[], startHour: number, hours: number): Reading[] {
+  return readings.filter((_, i) => i < startHour || i >= startHour + hours);
+}
+
+/** Glitch: physically impossible values (below empty / above full). */
+function injectOutOfRange(readings: Reading[], hours: number[]): Reading[] {
+  const bad = [118.4, -2.1, 131.7];
+  return readings.map((r, i) => {
+    const idx = hours.indexOf(i);
+    return idx === -1 ? r : { ...r, levelPct: bad[idx % bad.length] };
+  });
+}
+
+/** Sensor goes silent and never comes back within the window. */
+function injectSilentTail(readings: Reading[], hours: number): Reading[] {
+  return readings.slice(0, readings.length - hours);
+}
+
+// tank-01: frozen sensor for 10h on day ~12
+tanks[0].readings = injectStuckRun(tanks[0].readings, 12 * 24 + 3, 10);
+
+// tank-03: 14h comms dropout on day ~22, then recovers
+tanks[2].readings = injectGap(tanks[2].readings, 22 * 24 + 6, 14);
+
+// tank-04: three impossible readings, then goes silent for the last 9h
+tanks[3].readings = injectOutOfRange(tanks[3].readings, [9 * 24 + 2, 17 * 24 + 15, 25 * 24 + 8]);
+tanks[3].readings = injectSilentTail(tanks[3].readings, 9);
 
 await Bun.write(
   "public/tanks.json",
